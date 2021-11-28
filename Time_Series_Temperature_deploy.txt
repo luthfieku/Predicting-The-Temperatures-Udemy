@@ -1,0 +1,178 @@
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import seaborn as sns
+import warnings
+warnings.filterwarnings('ignore')
+import matplotlib.pyplot as plt
+
+#Is there a global warming?
+#Let's read the data from the "GlobalTemperatures.csv" file, which has a monthly Earth’s temperature and plot it on the chart.
+
+#membaca file csv
+global_temp=pd.read_csv('GlobalTemperatures.csv')
+
+#melihat 5 data teratas
+global_temp.head()
+
+#split data
+global_temp['dt'][0].split('-')[0]
+
+def fetch_year(date):
+    return date.split('-')[0]
+
+#membuat kolom years
+global_temp['years']=global_temp['dt'].apply(fetch_year)
+
+#melihat 5 data teratas
+global_temp.head()
+
+#membuat aggregat data per tahun
+data=global_temp.groupby('years').agg({'LandAverageTemperature':'mean','LandAverageTemperatureUncertainty':'mean'}).reset_index()
+
+#melihat keseluruhan data
+data
+
+#membuat data 'Uncertainity_top' dan 'Uncertainity_bottom'
+data['Uncertainity_top']=data['LandAverageTemperature'] + data['LandAverageTemperatureUncertainty']
+data['Uncertainity_bottom']=data['LandAverageTemperature'] - data['LandAverageTemperatureUncertainty']
+
+#melihat 5 data teratas
+data.head()
+
+#melihat kolom yang ada
+data.columns
+
+#membuat grafik 'Avg Land Temp in World'
+fig=px.line(data,x='years',y=['LandAverageTemperature','Uncertainity_top', 'Uncertainity_bottom'],title='Avg Land Temp in World')
+fig.show()
+
+#Analyse Average temperature in each season
+
+#melihat 5 data teratas
+global_temp.head()
+
+#melihat tipe data
+global_temp.dtypes
+
+#merubat dt dari object menjadi datetime
+global_temp['dt']=pd.to_datetime(global_temp['dt'])
+
+#melihat tipe data
+global_temp.dtypes
+
+#membuat kolom bulan
+global_temp['month']=global_temp['dt'].dt.month
+
+global_temp.head()
+
+#membuat season
+def get_season(month):
+    if month>=3 and month<=5:
+        return 'spring'
+    elif month>=6 and month<=8:
+        return 'summer'
+    elif month>=9 and month<=11:
+        return 'autumn'
+    else:
+        return 'winter'
+
+global_temp['season']=global_temp['month'].apply(get_season)
+
+global_temp.head()
+
+#memberi nama musim
+years=global_temp['years'].unique()
+
+spring_temps=[]
+summer_temps=[]
+autumn_temps=[]
+winter_temps=[]
+
+for year in years:
+    current_df=global_temp[global_temp['years']==year]
+    spring_temps.append(current_df[current_df['season']=='spring']['LandAverageTemperature'].mean())
+    summer_temps.append(current_df[current_df['season']=='summer']['LandAverageTemperature'].mean())
+    autumn_temps.append(current_df[current_df['season']=='autumn']['LandAverageTemperature'].mean())
+    winter_temps.append(current_df[current_df['season']=='winter']['LandAverageTemperature'].mean())
+    
+season=pd.DataFrame()
+
+season['year']=years
+season['spring_temps']=spring_temps
+season['summer_temps']=summer_temps
+season['autumn_temps']=autumn_temps
+season['winter_temps']=winter_temps
+
+season.head()
+
+#melihat kolom season
+season.columns
+
+#membuat grafik 'Avg Temp in Each Season'
+fig=px.line(season,x='year',y=['spring_temps', 'summer_temps', 'autumn_temps', 'winter_temps'],title='Avg Temp in Each Season')
+fig.show()
+
+### Lets Build a Time Series Model
+#membaca dataset 'GlobalLandTemperaturesByCity.csv'
+cities=pd.read_csv('GlobalLandTemperaturesByCity.csv')
+
+#melihat 5 data teratas
+cities.head()
+
+#melihat jumlah baris dan kolom
+cities.shape
+
+#membuat negara 'usa'dari 'cities'
+
+usa=cities[cities['Country']=='United States']
+
+usa.shape
+
+data=['New York','Los Angeles','San Francisco']
+
+data2=usa[usa['City'].isin(data)]
+
+data2.head()
+
+#menampilkan 'dt' dan 'AverageTemperature'
+data2=data2[['dt','AverageTemperature']]
+
+data2.head()
+
+#membuat kolom date dan temp
+data2.columns=['Date','Temp']
+
+data2.head()
+
+#melihat tipe data
+data2.dtypes
+
+#merubah tipe data
+data2['Date']=pd.to_datetime(data2['Date'])
+
+#melihat data yang kosong
+data2.isna().sum()
+
+#menghapus data kosong
+data2.dropna(inplace=True)
+
+data2.shape
+
+data2.head()
+
+#melihat 5 data terendah
+data2.tail()
+
+#membuat grafik date dan temp
+plt.figure(figsize=(20,10))
+import seaborn as sns
+sns.lineplot(data = data2)
+plt.show()
+
+
+
+
+
+
+
